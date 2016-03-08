@@ -5,7 +5,7 @@ A small C# project that processes mathematical expressions in string format.  Op
 - Modulus
 - Numeric comparisons resulting in a boolean value
 - Boolean comparisons:  and, or
-- Ternary operators ()?():()
+- Ternary operators...  bool ? ifTrue : ifFalse
 - Ceiling, Floor, Round
 - Abs()
 - Pow()
