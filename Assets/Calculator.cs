@@ -105,7 +105,7 @@ public class Calculator
 		new Token(Token.Type.OPEN_BRACKET,          "(",        100, null),
 		new Token(Token.Type.CLOSE_BRACKET,         ")",        100, null),
 		new Token(Token.Type.ARGUMENT_SEPERATOR,    ",",        -10, null),
-		new Token(Token.Type.OPERATOR_TERNARY,      "?",        -10, null),
+		new Token(Token.Type.OPERATOR_TERNARY,      "?",        -10, EvaluateTernaryOperator, 2),
 		new Token(Token.Type.TERNARY_SEPERATOR,     ":",        -10, null),
 		new Token(Token.Type.STRING_DELIMITER,      "\"",         0, null),
 		NullToken(),
@@ -115,11 +115,15 @@ public class Calculator
 		new Token(Token.Type.FUNCTION,              "pow",      100, EvaluateFunction, 2),
 		new Token(Token.Type.FUNCTION,              "abs",      100, EvaluateFunction, 1),
 		new Token(Token.Type.FUNCTION,              "sin",      100, EvaluateFunction, 1),
+		new Token(Token.Type.FUNCTION,              "asin",     100, EvaluateFunction, 1),
 		new Token(Token.Type.FUNCTION,              "cos",      100, EvaluateFunction, 1),
+		new Token(Token.Type.FUNCTION,              "acos",     100, EvaluateFunction, 1),
 		new Token(Token.Type.FUNCTION,              "tan",      100, EvaluateFunction, 1),
 		new Token(Token.Type.FUNCTION,              "atan2",    100, EvaluateFunction, 2),
 		new Token(Token.Type.FUNCTION,              "atan",     100, EvaluateFunction, 1),
-		new Token(Token.Type.KEYWORD,               "pi",       100, (f,a) => NumericToken(Mathf.PI))
+		new Token(Token.Type.KEYWORD,               "pi",       100, (f,a) => NumericToken(Mathf.PI)),
+		new Token(Token.Type.KEYWORD,               "deg2rad",  100, (f,a) => NumericToken(Mathf.Deg2Rad)),
+		new Token(Token.Type.KEYWORD,               "rad2deg",  100, (f,a) => NumericToken(Mathf.Rad2Deg)),
 	};
 
 	/// <summary>
@@ -143,24 +147,24 @@ public class Calculator
 
 	public string Evaluate(string expression)
 	{
-		return _evaluate(expression).m_Value;
+		return EvaluateToToken(expression).m_Value;
 	}
 
 	public bool TryEvaluate(string expression, out string result)
 	{
-		var eval = _evaluate(expression);
+		var eval = EvaluateToToken(expression);
 		result = eval.m_Value;
 		return eval.m_Type != Token.Type.ERROR;
 	}
 
 	public bool TryEvaluate(string expression, out float result)
 	{
-		var eval = _evaluate(expression);
+		var eval = EvaluateToToken(expression);
 		result = eval.Numeric;
 		return eval.m_Type == Token.Type.NUMERIC_VALUE;
 	}
 
-	protected Token _evaluate(string expression)
+	public Token EvaluateToToken(string expression)
 	{
 		Tokenize(expression);
 		InfixToPostfix();
@@ -347,7 +351,6 @@ public class Calculator
 					_postfix.Add(tokenA);
 					break;
 
-
 				case Token.Type.FUNCTION:
 					if (i < _infix.Count - 1 && _infix[i + 1].m_Type != Token.Type.OPEN_BRACKET)
 					{
@@ -371,6 +374,7 @@ public class Calculator
 					break;
 
 
+				case Token.Type.OPERATOR_TERNARY:
 				case Token.Type.OPERATOR_BINARY_LEFT:
 					while (stack.Count > 0)
 					{
@@ -446,13 +450,16 @@ public class Calculator
 					}
 					break;
 
+				case Token.Type.TERNARY_SEPERATOR:
+					stack.Push(tokenA);
+					break;
 
 				case Token.Type.ARGUMENT_SEPERATOR:
 
 					if (stack.Count == 0)
 					{
 						_postfix.Clear();
-						_postfix.Add(ErrorToken("Missplaced argument seperator"));
+						_postfix.Add(ErrorToken("Misplaced argument seperator"));
 						return;
 					}
 
@@ -470,7 +477,7 @@ public class Calculator
 					if (stack.Count == 0)
 					{
 						_postfix.Clear();
-						_postfix.Add(ErrorToken("Missplaced argument seperator"));
+						_postfix.Add(ErrorToken("Misplaced argument seperator"));
 						return;
 					}
 
@@ -596,6 +603,14 @@ public class Calculator
 					stack.Push(token.m_Evaluator(token, args));
 					break;
 
+				case Token.Type.OPERATOR_TERNARY:
+					var falseResult = stack.Pop();
+					var trueResult = stack.Pop();
+					var condition = stack.Pop();
+					args = new Token[] { condition, trueResult, falseResult };
+					stack.Push(token.m_Evaluator(token, args));
+					break;
+
 				case Token.Type.FUNCTION:
 					var argList = new List<Token>();
 					while (stack.Count > 0)
@@ -664,8 +679,12 @@ public class Calculator
 				return NumericToken(Mathf.Pow(args[0].Numeric, args[1].Numeric));
 			case "sin":
 				return NumericToken(Mathf.Sin(args[0].Numeric));
+			case "asin":
+				return NumericToken(Mathf.Asin(args[0].Numeric));
 			case "cos":
 				return NumericToken(Mathf.Cos(args[0].Numeric));
+			case "acos":
+				return NumericToken(Mathf.Acos(args[0].Numeric));
 			case "tan":
 				return NumericToken(Mathf.Tan(args[0].Numeric));
 			case "atan":
@@ -677,6 +696,22 @@ public class Calculator
 		return ErrorToken("Unknown Function: \"" + func.m_Value + "\"");
 	}
 
+	static Token EvaluateTernaryOperator(Token op, Token[] args)
+	{
+		if (args[0].m_Type != Token.Type.BOOL_VALUE)
+		{
+			return ErrorToken("Non boolean value found before ternary operator.");
+		}
+
+		if (args[0].Boolean)
+		{
+			return args[1];
+		}
+		else
+		{
+			return args[2];
+		}
+	}
 
 	static Token EvaluateBinaryOperator(Token op, Token[] args)
 	{
@@ -769,27 +804,27 @@ public class Calculator
 	//  Evaluation helper methods
 	//---------------------------------------------
 
-	static protected Token NumericToken(float value)
+	static public Token NumericToken(float value)
 	{
 		return new Token(Token.Type.NUMERIC_VALUE, value.ToString(), 0, null);
 	}
 
-	static protected Token ErrorToken(string message)
+	static public Token ErrorToken(string message)
 	{
 		return new Token(Token.Type.ERROR, message, 0, null);
 	}
 
-	static protected Token BooleanToken(bool value)
+	static public Token BooleanToken(bool value)
 	{
 		return new Token(Token.Type.BOOL_VALUE, value ? TRUE_VALUE : FALSE_VALUE, 0, null);
 	}
 
-	static protected Token StringToken(string value)
+	static public Token StringToken(string value)
 	{
 		return new Token(Token.Type.STRING_VALUE, value, 0, null);
 	}
 
-	static protected Token NullToken()
+	static public Token NullToken()
 	{
 		return new Token(Token.Type.NULL_VALUE, "null", 0, null);
 	}

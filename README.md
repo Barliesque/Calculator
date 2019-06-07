@@ -4,11 +4,12 @@ A small C# project that processes mathematical expressions in string format.  Op
 - Addition, Subtraction, Multiplication, Division
 - Modulus
 - Numeric comparisons resulting in a boolean value
-- Boolean comparisons:  and, or, ==, !=
+- Ternary operators...  bool ? trueResult : falseResult
+- Boolean comparisons:  &&, ||, ==, !=
 - Ceil(), Floor(), Round()
-- Abs()
-- Pow()
+- Abs(), Pow(), Sqrt()
+- Sin(), Cos(), Tan(), Asin(), Acos(), Atan(), Atan2()
+- Constant values: Pi, Rad2Deg, Deg2Rad
+
 ...as well as external function calls with an arbitrary number of parameters.
 
-Partially implemented:
-- Ternary operators...  bool ? ifTrue : ifFalse
