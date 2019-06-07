@@ -5,9 +5,10 @@ using System;
 /// <summary>
 /// Evaluate a mathematical expression in string form.
 /// </summary>
-public class Calculator {
+public class Calculator
+{
 
-	// Every operator, symbol, value and function is 
+	// Every operator, symbol, value and function is parsed into a Token
 	public struct Token
 	{
 		public enum Type
@@ -35,13 +36,14 @@ public class Calculator {
 
 		public delegate Token Evaluator(Token op, Token[] args);
 
-		public Type			m_Type			{ get; private set; }
-		public string		m_Value			{ get; private set; }
-		public int			m_Precedence	{ get; private set; }
-		public Evaluator	m_Evaluator		{ get; private set; }
-		public int			m_ArgCount		{ get; private set; }
+		public Type m_Type { get; private set; }
+		public string m_Value { get; private set; }
+		public int m_Precedence { get; private set; }
+		public Evaluator m_Evaluator { get; private set; }
+		public int m_ArgCount { get; private set; }
 
-		public float Numeric {
+		public float Numeric
+		{
 			get {
 				float result;
 				var good = float.TryParse(m_Value, out result);
@@ -51,8 +53,7 @@ public class Calculator {
 
 		public bool Boolean
 		{
-			get
-			{
+			get {
 				return (m_Value == Calculator.TRUE_VALUE);
 			}
 		}
@@ -87,10 +88,10 @@ public class Calculator {
 	/// Standard operator tokens supported by the calculator.
 	/// </summary>
 	static Token[] s_Operators = {
-		new Token(Token.Type.OPERATOR_SIGN,			"+",		 20, null),
-		new Token(Token.Type.OPERATOR_SIGN,			"-",		 20, null),
-		new Token(Token.Type.OPERATOR_BINARY_LEFT,	"*",		 40, EvaluateBinaryOperator),
-		new Token(Token.Type.OPERATOR_BINARY_LEFT,	"/",		 40, EvaluateBinaryOperator),
+		new Token(Token.Type.OPERATOR_SIGN,         "+",         20, null),
+		new Token(Token.Type.OPERATOR_SIGN,         "-",         20, null),
+		new Token(Token.Type.OPERATOR_BINARY_LEFT,  "*",         40, EvaluateBinaryOperator),
+		new Token(Token.Type.OPERATOR_BINARY_LEFT,  "/",         40, EvaluateBinaryOperator),
 		new Token(Token.Type.OPERATOR_BINARY_LEFT,  "<",         10, EvaluateBinaryOperator),
 		new Token(Token.Type.OPERATOR_BINARY_LEFT,  ">",         10, EvaluateBinaryOperator),
 		new Token(Token.Type.OPERATOR_BINARY_LEFT,  "<=",        10, EvaluateBinaryOperator),
@@ -101,24 +102,24 @@ public class Calculator {
 		new Token(Token.Type.OPERATOR_BINARY_LEFT,  "||",         0, EvaluateBooleanOperator),
 		BooleanToken(true),
 		BooleanToken(false),
-		new Token(Token.Type.OPEN_BRACKET,			"(",		100, null),
-		new Token(Token.Type.CLOSE_BRACKET,         ")",		100, null),
-		new Token(Token.Type.ARGUMENT_SEPERATOR,	",",		-10, null),
+		new Token(Token.Type.OPEN_BRACKET,          "(",        100, null),
+		new Token(Token.Type.CLOSE_BRACKET,         ")",        100, null),
+		new Token(Token.Type.ARGUMENT_SEPERATOR,    ",",        -10, null),
 		new Token(Token.Type.OPERATOR_TERNARY,      "?",        -10, null),
 		new Token(Token.Type.TERNARY_SEPERATOR,     ":",        -10, null),
 		new Token(Token.Type.STRING_DELIMITER,      "\"",         0, null),
 		NullToken(),
-		new Token(Token.Type.FUNCTION,				"floor",	100, EvaluateFunction, 1),
-		new Token(Token.Type.FUNCTION,              "ceil",		100, EvaluateFunction, 1),
+		new Token(Token.Type.FUNCTION,              "floor",    100, EvaluateFunction, 1),
+		new Token(Token.Type.FUNCTION,              "ceil",     100, EvaluateFunction, 1),
 		new Token(Token.Type.FUNCTION,              "round",    100, EvaluateFunction, 1),
 		new Token(Token.Type.FUNCTION,              "pow",      100, EvaluateFunction, 2),
 		new Token(Token.Type.FUNCTION,              "abs",      100, EvaluateFunction, 1),
-		new Token(Token.Type.FUNCTION,              "sin",		100, EvaluateFunction, 1),
-		new Token(Token.Type.FUNCTION,              "cos",		100, EvaluateFunction, 1),
+		new Token(Token.Type.FUNCTION,              "sin",      100, EvaluateFunction, 1),
+		new Token(Token.Type.FUNCTION,              "cos",      100, EvaluateFunction, 1),
 		new Token(Token.Type.FUNCTION,              "tan",      100, EvaluateFunction, 1),
 		new Token(Token.Type.FUNCTION,              "atan2",    100, EvaluateFunction, 2),
 		new Token(Token.Type.FUNCTION,              "atan",     100, EvaluateFunction, 1),
-		new Token(Token.Type.KEYWORD,               "pi",		100, (f,a) => NumericToken(Mathf.PI))
+		new Token(Token.Type.KEYWORD,               "pi",       100, (f,a) => NumericToken(Mathf.PI))
 	};
 
 	/// <summary>
@@ -173,7 +174,7 @@ public class Calculator {
 	//  Step 1:  Tokenize the expression
 	//------------------------------------------------------
 
-	
+
 	/** Parse the expression into an array of individual operators, operands and functions */
 	void Tokenize(string expression)
 	{
@@ -184,35 +185,43 @@ public class Calculator {
 		//
 		_infix = new List<Token>();
 
-		for (int c = 0; c < expr.Length; c++) {
+		for (int c = 0; c < expr.Length; c++)
+		{
 
 			// Skip spaces
 			if (expr[c] == ' ')
 				continue;
 
-			if (IsNumeric(expr[c])) {
+			if (IsNumeric(expr[c]))
+			{
 				// NUMERIC VALUE FOUND
 				// find characters that are part of this numeric value
 				int i = c + 1;
-				for (; i < expr.Length; i++) {
+				for (; i < expr.Length; i++)
+				{
 					if (!IsNumeric(expr[i])) break;
 				}
 				// push the value as a token, and remove from the expression
-				_infix.Add( new Token(Token.Type.NUMERIC_VALUE, expression.Substring(c, i - c), 0, null));
+				_infix.Add(new Token(Token.Type.NUMERIC_VALUE, expression.Substring(c, i - c), 0, null));
 				c = i - 1;
-			} else {
+			}
+			else
+			{
 				Token? op = FindNextOperator(expression, c, true);
-				if (op.HasValue) {
+				if (op.HasValue)
+				{
 					// FOUND AN OPERATOR OR EXPRESSION
 
 					Token.Type? prevTokenType = null;
 					if (_infix.Count > 0) prevTokenType = _infix[_infix.Count - 1].m_Type;
 
-					switch (op.Value.m_Type) {
+					switch (op.Value.m_Type)
+					{
 
 						case Token.Type.ARGUMENT_SEPERATOR:
 							// Make sure parameters have at least a null value. ie,  func(,)  becomes:  func(null,null)
-							if (prevTokenType == Token.Type.OPEN_BRACKET || prevTokenType == Token.Type.ARGUMENT_SEPERATOR) {
+							if (prevTokenType == Token.Type.OPEN_BRACKET || prevTokenType == Token.Type.ARGUMENT_SEPERATOR)
+							{
 								_infix.Add(new Token(Token.Type.NULL_VALUE, "null", 0, null));
 							}
 							c += op.Value.m_Value.Length - 1;
@@ -220,7 +229,8 @@ public class Calculator {
 
 						case Token.Type.CLOSE_BRACKET:
 							// Make sure parameters have at least a null value. ie,  func(,)  becomes:  func(null,null)
-							if (prevTokenType == Token.Type.ARGUMENT_SEPERATOR) {
+							if (prevTokenType == Token.Type.ARGUMENT_SEPERATOR)
+							{
 								_infix.Add(new Token(Token.Type.NULL_VALUE, "null", 0, null));
 							}
 							c += op.Value.m_Value.Length - 1;
@@ -241,7 +251,9 @@ public class Calculator {
 					// Add the token
 					_infix.Add(op.Value);
 
-				} else {
+				}
+				else
+				{
 
 					// No values or expressions recognized?  Must be junk!
 					_infix.Clear();
@@ -250,36 +262,47 @@ public class Calculator {
 				}
 			}
 		}
-	}		
-	
+	}
 
-	bool IsNumeric(char v) {
+
+	bool IsNumeric(char v)
+	{
 		return ((v >= '0' && v <= '9') || (v == '.'));
 	}
-	
 
-	Token? FindNextOperator(string expression, int fromChar, bool findFunctions) {
-		// TASK:  This method will mistake similar function names { e.g.  Foo() recognized before  FooBar() } causing unexpected results
 
-		for (int index = 0; index < m_ExtendedOperators.Count; index++) {
+	Token? FindNextOperator(string expression, int fromChar, bool findFunctions)
+	{
+		//TODO  This method will mistake similar function names { e.g. FooBar() mistakenly recognized as Foo() } causing unexpected results
+
+		for (int index = 0; index < m_ExtendedOperators.Count; index++)
+		{
 			var op = m_ExtendedOperators[index];
 			var symbol = op.m_Value;
-			if (fromChar + symbol.Length <= expression.Length) {
+			if (fromChar + symbol.Length <= expression.Length)
+			{
 				// Case-insensitive comparison with each symbol in the list
-				if (string.Compare(expression.Substring(fromChar, symbol.Length), symbol, true) == 0) {
-					if (op.m_Type != Token.Type.FUNCTION || findFunctions) {
+				if (string.Compare(expression.Substring(fromChar, symbol.Length), symbol, true) == 0)
+				{
+					if (op.m_Type != Token.Type.FUNCTION || findFunctions)
+					{
 						return op;
 					}
 				}
 			}
 		}
-		for (int index = 0; index < s_Operators.Length; index++) {
+
+		for (int index = 0; index < s_Operators.Length; index++)
+		{
 			var op = s_Operators[index];
-            var symbol = op.m_Value;
-			if (fromChar + symbol.Length <= expression.Length) {
+			var symbol = op.m_Value;
+			if (fromChar + symbol.Length <= expression.Length)
+			{
 				// Case-insensitive comparison with each symbol in the list
-				if (string.Compare(expression.Substring(fromChar, symbol.Length), symbol, true) == 0) {
-					if (op.m_Type != Token.Type.FUNCTION || findFunctions) {
+				if (string.Compare(expression.Substring(fromChar, symbol.Length), symbol, true) == 0)
+				{
+					if (op.m_Type != Token.Type.FUNCTION || findFunctions)
+					{
 						return op;
 					}
 				}
@@ -288,6 +311,7 @@ public class Calculator {
 
 		return null;
 	}
+
 
 	//--------------------------------------------------------------
 	//  Step 2:  Convert the expression to Reverse Polish Notation
@@ -299,7 +323,8 @@ public class Calculator {
 		var stack = new Stack<Token>();
 
 		Token? token = null;
-		for (int i = 0; i < _infix.Count; i++) {
+		for (int i = 0; i < _infix.Count; i++)
+		{
 
 			Token.Type? prevType = null;
 			if (token.HasValue)
@@ -309,7 +334,8 @@ public class Calculator {
 			Token tokenA = token.Value;
 			Token tokenB;
 
-			switch (tokenA.m_Type) {
+			switch (tokenA.m_Type)
+			{
 
 				case Token.Type.KEYWORD:
 				case Token.Type.NUMERIC_VALUE:
@@ -323,10 +349,13 @@ public class Calculator {
 
 
 				case Token.Type.FUNCTION:
-					if (i < _infix.Count - 1 && _infix[i + 1].m_Type != Token.Type.OPEN_BRACKET) {
+					if (i < _infix.Count - 1 && _infix[i + 1].m_Type != Token.Type.OPEN_BRACKET)
+					{
 						_postfix.Clear();
 						_postfix.Add(ErrorToken("Function missing open bracket: \"" + tokenA.m_Value));
-					} else {
+					}
+					else
+					{
 						// Push the token on to the stack.
 						stack.Push(tokenA);
 						// and add an open paren to postfix to mark where this function's parameters begin
@@ -342,13 +371,17 @@ public class Calculator {
 					break;
 
 
-                case Token.Type.OPERATOR_BINARY_LEFT:
-					while (stack.Count > 0) {
+				case Token.Type.OPERATOR_BINARY_LEFT:
+					while (stack.Count > 0)
+					{
 						tokenB = stack.Peek();
-						if (tokenB.m_Precedence >= tokenA.m_Precedence && tokenB.m_Type != Token.Type.OPEN_BRACKET) {
+						if (tokenB.m_Precedence >= tokenA.m_Precedence && tokenB.m_Type != Token.Type.OPEN_BRACKET)
+						{
 							// Pop B off the stack and append it to the output
 							_postfix.Add(stack.Pop());
-						} else {
+						}
+						else
+						{
 							break;
 						}
 					}
@@ -359,12 +392,16 @@ public class Calculator {
 
 				case Token.Type.OPERATOR_BOOLEAN:
 				case Token.Type.OPERATOR_BINARY_RIGHT:
-					while (stack.Count > 0) {
+					while (stack.Count > 0)
+					{
 						tokenB = stack.Peek();
-						if (tokenB.m_Precedence > tokenA.m_Precedence && tokenB.m_Type != Token.Type.OPEN_BRACKET) {
+						if (tokenB.m_Precedence > tokenA.m_Precedence && tokenB.m_Type != Token.Type.OPEN_BRACKET)
+						{
 							// Pop B off the stack and append it to the output
 							_postfix.Add(stack.Pop());
-						} else {
+						}
+						else
+						{
 							break;
 						}
 					}
@@ -374,19 +411,24 @@ public class Calculator {
 
 
 				case Token.Type.OPERATOR_SIGN:
-					
-					switch (prevType.Value) {
+
+					switch (prevType.Value)
+					{
 						case Token.Type.CLOSE_BRACKET:
 						case Token.Type.NUMERIC_VALUE:
 						case Token.Type.KEYWORD:
 						case Token.Type.OPERATOR_UNARY_POST:
 							// This is really a binary operator...
-							while (stack.Count > 0) {
+							while (stack.Count > 0)
+							{
 								tokenB = stack.Peek();
-								if (tokenB.m_Precedence >= tokenA.m_Precedence && tokenB.m_Type != Token.Type.OPEN_BRACKET) {
+								if (tokenB.m_Precedence >= tokenA.m_Precedence && tokenB.m_Type != Token.Type.OPEN_BRACKET)
+								{
 									// Pop B off the stack and append it to the output
 									_postfix.Add(stack.Pop());
-								} else {
+								}
+								else
+								{
 									break;
 								}
 							}
@@ -407,13 +449,15 @@ public class Calculator {
 
 				case Token.Type.ARGUMENT_SEPERATOR:
 
-					if (stack.Count == 0) {
+					if (stack.Count == 0)
+					{
 						_postfix.Clear();
 						_postfix.Add(ErrorToken("Missplaced argument seperator"));
 						return;
 					}
 
-					do {
+					do
+					{
 						tokenB = stack.Peek();
 						if (tokenB.m_Type == Token.Type.OPEN_BRACKET || tokenB.m_Type == Token.Type.ARGUMENT_SEPERATOR)
 							break;
@@ -423,7 +467,8 @@ public class Calculator {
 						// Repeat until the stack is empty, or we've come to an open bracket
 					} while (stack.Count == 0);
 
-					if (stack.Count == 0) {
+					if (stack.Count == 0)
+					{
 						_postfix.Clear();
 						_postfix.Add(ErrorToken("Missplaced argument seperator"));
 						return;
@@ -434,30 +479,36 @@ public class Calculator {
 
 
 				case Token.Type.CLOSE_BRACKET:
-					if (stack.Count == 0) {
+					if (stack.Count == 0)
+					{
 						_postfix.Clear();
 						_postfix.Add(ErrorToken("Missmatched brackets"));
 						return;
 					}
 
 					int argCount = 1;
-					while (stack.Count > 0) {
+					while (stack.Count > 0)
+					{
 						tokenB = stack.Peek();
 						if (tokenB.m_Type == Token.Type.OPEN_BRACKET)
 							break;
 
 						// Pop the top element off the stack and add it to the output
-						if (tokenB.m_Type == Token.Type.ARGUMENT_SEPERATOR) {
+						if (tokenB.m_Type == Token.Type.ARGUMENT_SEPERATOR)
+						{
 							// Throw away argument seperators, but keep track of how many parameters have been passed
 							++argCount;
 							stack.Pop();
-						} else {
+						}
+						else
+						{
 							_postfix.Add(stack.Pop());
 						}
 
 						// ...repeat until the top element of the stack is an open bracket
 					}
-					if (stack.Count == 0) {
+					if (stack.Count == 0)
+					{
 						_postfix.Clear();
 						_postfix.Add(ErrorToken("Missmatched brackets"));
 						return;
@@ -466,13 +517,16 @@ public class Calculator {
 					stack.Pop();
 
 					// If the token at the top of the stack is a function token
-					if (stack.Count > 0) {
+					if (stack.Count > 0)
+					{
 						tokenB = stack.Peek();
-						if (tokenB.m_Type == Token.Type.FUNCTION) {
+						if (tokenB.m_Type == Token.Type.FUNCTION)
+						{
 							// Check that the correct number of parameters were passed
-							if (tokenB.m_ArgCount != argCount && tokenB.m_ArgCount >= 0) {
+							if (tokenB.m_ArgCount != argCount && tokenB.m_ArgCount >= 0)
+							{
 								_postfix.Clear();
-								_postfix.Add(ErrorToken("Argument count mismatch.  Function " + 
+								_postfix.Add(ErrorToken("Argument count mismatch.  Function " +
 									tokenB.m_Value + "() expects " + tokenB.m_ArgCount + " parameter" + (tokenB.m_ArgCount == 1 ? "" : "s") +
 									", but received " + argCount));
 								return;
@@ -492,10 +546,12 @@ public class Calculator {
 		}
 
 		// Add the remaining stack to the output
-		while (stack.Count > 0) {
+		while (stack.Count > 0)
+		{
 			_postfix.Add(stack.Pop());
 		}
 	}
+
 
 	//------------------------------------
 	//  Step 3:  Evaluate the expression
@@ -503,7 +559,8 @@ public class Calculator {
 
 	void EvaluatePostfix()
 	{
-		if (_postfix.Count == 0) {
+		if (_postfix.Count == 0)
+		{
 			_result = ErrorToken("Invalid expression");
 			return;
 		}
@@ -517,11 +574,13 @@ public class Calculator {
 		Token[] args;
 
 		// Evaluate each token in the postfix
-		for (int i = 0; i < _postfix.Count; i++) {
+		for (int i = 0; i < _postfix.Count; i++)
+		{
 			var token = _postfix[i];
 			Token t;
 
-			switch (token.m_Type) {
+			switch (token.m_Type)
+			{
 
 				case Token.Type.OPERATOR_UNARY_PRE:
 				case Token.Type.OPERATOR_UNARY_POST:
@@ -539,24 +598,26 @@ public class Calculator {
 
 				case Token.Type.FUNCTION:
 					var argList = new List<Token>();
-					while (stack.Count > 0) {
+					while (stack.Count > 0)
+					{
 						t = stack.Pop();
 						//  Open bracket denotes start of parameter list
 						if (t.m_Type == Token.Type.OPEN_BRACKET)
 							break;
 						argList.Insert(0, t);
 					}
-					if (token.m_ArgCount >= 0 && token.m_ArgCount != argList.Count) {
+					if (token.m_ArgCount >= 0 && token.m_ArgCount != argList.Count)
+					{
 						_result = ErrorToken("Argument count mismatch in Calculator function " + token.m_Value + "().  Expected " + token.m_ArgCount + " got " + argList.Count + ".");
 						return;
 					}
 					stack.Push(token.m_Evaluator(token, argList.ToArray()));
 					break;
-					
+
 				case Token.Type.KEYWORD:
 					stack.Push(token.m_Evaluator(token, null));
 					break;
-						
+
 				case Token.Type.STRING_VALUE:
 				case Token.Type.BOOL_VALUE:
 				case Token.Type.NUMERIC_VALUE:
@@ -572,11 +633,13 @@ public class Calculator {
 		}
 
 		// The stack should now contain only one value:  The result!
-		if (stack.Count != 1) {
+		if (stack.Count != 1)
+		{
 			_result = ErrorToken("Invalid expression");
 		}
 		_result = stack.Pop();
 	}
+
 
 	//------------------------------------------------------
 	//  Standard evaluator methods
@@ -585,7 +648,8 @@ public class Calculator {
 
 	static Token EvaluateFunction(Token func, Token[] args)
 	{
-		switch (func.m_Value) {
+		switch (func.m_Value)
+		{
 			case "floor":
 				return NumericToken(Mathf.Floor(args[0].Numeric));
 			case "ceil":
@@ -616,32 +680,49 @@ public class Calculator {
 
 	static Token EvaluateBinaryOperator(Token op, Token[] args)
 	{
-		var left = args[0].Numeric;
-		var right = args[1].Numeric;
-		if (float.IsNaN(left) || float.IsNaN(right))
-			return NumericToken(float.NaN);
+		if (args[0].m_Type == Token.Type.BOOL_VALUE && args[1].m_Type == Token.Type.BOOL_VALUE)
+		{
+			var left = args[0].Boolean;
+			var right = args[1].Boolean;
 
-		switch (op.m_Value) {
-			case "+":
-				return NumericToken(left + right);
-			case "-":
-				return NumericToken(left - right);
-			case "*":
-				return NumericToken(left * right);
-			case "/":
-				return NumericToken(left / right);
-			case "<":
-				return BooleanToken(left < right);
-			case ">":
-				return BooleanToken(left > right);
-			case "<=":
-				return BooleanToken(left <= right);
-			case ">=":
-				return BooleanToken(left >= right);
-			case "==":
-				return BooleanToken(left == right);
-			case "!=":
-				return BooleanToken(left != right);
+			switch (op.m_Value)
+			{
+				case "==":
+					return BooleanToken(left == right);
+				case "!=":
+					return BooleanToken(left != right);
+			}
+		}
+		else
+		{
+			var left = args[0].Numeric;
+			var right = args[1].Numeric;
+			if (float.IsNaN(left) || float.IsNaN(right))
+				return NumericToken(float.NaN);
+
+			switch (op.m_Value)
+			{
+				case "+":
+					return NumericToken(left + right);
+				case "-":
+					return NumericToken(left - right);
+				case "*":
+					return NumericToken(left * right);
+				case "/":
+					return NumericToken(left / right);
+				case "<":
+					return BooleanToken(left < right);
+				case ">":
+					return BooleanToken(left > right);
+				case "<=":
+					return BooleanToken(left <= right);
+				case ">=":
+					return BooleanToken(left >= right);
+				case "==":
+					return BooleanToken(left == right);
+				case "!=":
+					return BooleanToken(left != right);
+			}
 		}
 
 		return ErrorToken("Unknown Operator: \"" + op.m_Value + "\"");
@@ -657,7 +738,8 @@ public class Calculator {
 		var left = args[0].Boolean;
 		var right = args[1].Boolean;
 
-		switch (op.m_Value) {
+		switch (op.m_Value)
+		{
 			case "&&":
 				return BooleanToken(left && right);
 			case "||":
@@ -672,7 +754,8 @@ public class Calculator {
 	{
 		var right = args[0].Numeric;
 
-		switch (op.m_Value) {
+		switch (op.m_Value)
+		{
 			case "+":
 				return args[0];
 			case "-":
